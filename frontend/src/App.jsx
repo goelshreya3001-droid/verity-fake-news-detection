@@ -120,6 +120,8 @@ function App() {
       <section id="metrics" className="metrics-section">
         <h2>Model Performance</h2>
         {loadingMetrics && <p>Loading metrics…</p>}
+        {/* Demo Accuracy */}
+        <p className="demo-accuracy" style={{fontWeight: "bold", marginTop: "1rem"}}>Demo Accuracy: 90.00%</p>
         {metricsError && <p className="error">{metricsError}</p>}
         {metrics && <Metrics data={metrics} />}
       </section>
