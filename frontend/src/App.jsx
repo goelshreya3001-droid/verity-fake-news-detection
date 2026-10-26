@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import Navbar from "./components/Navbar";
 import HowVerityWorks from "./components/HowVerityWorks";
@@ -13,44 +14,73 @@ function App() {
   const [loadingMetrics, setLoadingMetrics] = useState(true);
 
   // ---- History state ----
-  const [history, setHistory] = useState([]);
+  const [history, setHistory] = useState(() => {
+    try {
+      const saved = localStorage.getItem("verityHistory");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   // Load metrics from backend
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const res = await fetch(
- 
-          `${import.meta.env.VITE_API_BASE_URL}/metrics`
-         );
-        if (!res.ok) throw new Error(`Failed to load metrics: ${res.status}`);
-        const data = await res.json();
-        const parsed = typeof data.metrics === "string" ? JSON.parse(data.metrics) : data.metrics;
-        setMetrics(parsed);
+        const API_URL = (
+          import.meta.env.VITE_API_BASE_URL ||
+          "https://verity-fake-news-detection.onrender.com"
+        ).replace(/\/+$/, "");
+        const res = await fetch(`${API_URL}/metrics`);
+        const responseText = await res.text();
+
+        if (!res.ok) {
+          throw new Error(`Metrics request failed: ${res.status}`);
+        }
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch {
+          throw new Error("Backend returned invalid JSON for metrics.");
+        }
+
+        let parsedMetrics = data.metrics;
+        if (typeof parsedMetrics === "string") {
+          try {
+            parsedMetrics = JSON.parse(parsedMetrics);
+          } catch {
+            throw new Error("Metrics data inside the response is invalid.");
+          }
+        }
+
+        if (!parsedMetrics || typeof parsedMetrics !== "object") {
+          throw new Error("Metrics data is missing or invalid.");
+        }
+
+        setMetrics(parsedMetrics);
+        setMetricsError(null);
       } catch (err) {
-        setMetricsError(err.message);
+        setMetricsError(err.message || "Could not load model metrics.");
       } finally {
         setLoadingMetrics(false);
       }
     };
+
     fetchMetrics();
   }, []);
 
-  // Load history from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("verityHistory");
-      if (saved) setHistory(JSON.parse(saved));
-    } catch (e) {
-      console.warn("Malformed history data in localStorage", e);
-    }
-  }, []);
-
-  // Add a successful prediction to history
+  // Add a successful prediction to history and persist it
   const addToHistory = (record) => {
-    const newHistory = [record, ...history];
-    setHistory(newHistory);
-    localStorage.setItem("verityHistory", JSON.stringify(newHistory));
+    setHistory((previousHistory) => {
+      const newHistory = [record, ...previousHistory];
+      try {
+        localStorage.setItem("verityHistory", JSON.stringify(newHistory));
+      } catch (error) {
+        console.error("Could not save history:", error);
+      }
+      return newHistory;
+    });
   };
 
   // Clear all history with confirmation
@@ -99,15 +129,15 @@ function App() {
         <h2>How It Works</h2>
         <p>
           Verity uses a classic Natural Language Processing pipeline. Text is first
-          cleaned and combined, then transformed into TF‑IDF n‑gram features. Three
+          cleaned and combined, then transformed into TF-IDF n-gram features. Three
           classifiers (Logistic Regression, Multinomial Naïve Bayes, Linear SVC) are
           trained on the provided dataset, and the model with the best validation
-          F1‑score is selected. The final model is a scikit‑learn pipeline saved with
+          F1-score is selected. The final model is a scikit-learn pipeline saved with
           <code>joblib</code> and served via FastAPI.
         </p>
         <p className="disclaimer">
-          <strong>Responsible Use:</strong> This tool does **not** perform live
-          fact‑checking. It classifies based on patterns learned from the training
+          <strong>Responsible Use:</strong> This tool does not perform live
+          fact-checking. It classifies based on patterns learned from the training
           data and may produce inaccurate results on unseen domains. Treat the
           output as a suggestion, not a definitive truth.
         </p>
