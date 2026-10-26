@@ -1,0 +1,11 @@
+node_modules/
+backend/__pycache__/
+backend/artifacts/
+frontend/dist/
+.env
+.DS_Store
+.idea/
+*.pyc
+__pycache__/
+datasets/*.csv
+
