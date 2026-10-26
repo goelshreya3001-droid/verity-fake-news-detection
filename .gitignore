@@ -1,11 +1,25 @@
+
+# Node dependencies
 node_modules/
-backend/__pycache__/
-backend/artifacts/
-frontend/dist/
+
+# Python cache and virtual environments
+__pycache__/
+**/__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Environment secrets
 .env
+.env.*
+
+# Frontend build
+frontend/dist/
+
+# IDE and OS files
 .DS_Store
 .idea/
-*.pyc
-__pycache__/
-datasets/*.csv
+.vscode/
 
+# Ignore dataset CSV files
+datasets/*.csv

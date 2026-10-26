@@ -19,7 +19,10 @@ function App() {
   useEffect(() => {
     const fetchMetrics = async () => {
       try {
-        const res = await fetch("/metrics");
+        const res = await fetch(
+ 
+          `${import.meta.env.VITE_API_BASE_URL}/metrics`
+         );
         if (!res.ok) throw new Error(`Failed to load metrics: ${res.status}`);
         const data = await res.json();
         const parsed = typeof data.metrics === "string" ? JSON.parse(data.metrics) : data.metrics;
